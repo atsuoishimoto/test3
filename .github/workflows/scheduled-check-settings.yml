@@ -1,0 +1,55 @@
+name: scheduled-check-settings
+on:
+  schedule:
+    - cron: '0 0 1 */6 *' # 半年ごとに一度
+  workflow_dispatch:
+
+jobs:
+  job1:
+    name: Detect unused setting
+    permissions:
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          architecture: x64
+
+      - name: Setup poetry env
+        run: |
+          poetry env use $(which python3)
+          poetry install --no-ansi
+
+      - name: Run check-settings
+        id: run
+        run: |
+          {
+            echo 'result<<EOF'
+            poetry run task check-settings || true
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Create team sync issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: 未使用の可能性がある設定を検出しました
+          BODY: |
+            ${{join(steps.run.outputs.*, '\n')}}
+        run: |
+          echo aaaa $BODY bbbb
+          python3 -c "import os;print(repr(os.environ['BODY']))"
+          if [[ $BODY != $'\n' ]]; then
+            echo abcdefgh
+            new_issue_url=$(gh issue create \
+              --title "$TITLE" \
+              --body "$BODY")
+          fi

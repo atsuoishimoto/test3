@@ -1,0 +1,86 @@
+[tool.poetry]
+authors = []
+description = ""
+name = "aaa"
+version = "1.0.0"
+packages = [
+  { include = "*", from = "bbb" }
+]
+
+[tool.poetry.dependencies]
+Django = "^4.0"
+# nikkei-utils = "^1.0.0"
+python = "^3.11"
+sentry-sdk = "^1.5.10"
+whitenoise = "^6.0.0"
+uWSGI = "^2.0.21"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.1"
+coverage = "^7.0.1"
+flake8 = "^6.0.0"
+isort = "^5.10.1"
+mypy = "^1.1"
+pytest = "^7.1.2"
+pytest-cov = "^4.0.0"
+pytest-django = "^4.5.2"
+pytest-mock = "^3.7.0"
+pytest-randomly = "^3.11.0"
+pytest-responses = "^0.5.0"
+pytest-xdist = "^3.0.2"
+taskipy = "^1.10.1"
+testfixtures = "^7.0.0"
+tox = "^4.0.16"
+
+[[tool.poetry.source]]
+name = "nikkei"
+url = "https://pypi.n8s.jp/9c346c40-7d2f-473e-9580-d41ee07d25ea/packages/simple/"
+priority = "default"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[tool.black]
+exclude = '''
+(
+    htmlcov
+    | .mypy_cache
+    | .pytest_cache
+    | .tox
+    | venv
+    | migrations
+)
+'''
+line-length = 88
+
+[tool.isort]
+profile = "black"
+src_paths = ["bbb"]
+
+[tool.coverage.report]
+include = ["bbb/**"]
+omit = [
+  "bbb/*/tests/**",
+  "bbb/*/tests.py",
+  "bbb/bbb/settings/**",
+]
+skip_covered = true
+
+[tool.taskipy.tasks]
+createsuperuser = "python bbb/manage.py createsuperuser"
+format = '''
+isort bbb/
+black bbb/
+'''
+migrate = "python bbb/manage.py migrate"
+runserver = "python bbb/manage.py runserver"
+sort-import = "isort bbb/ --diff"
+check-settings = "PYTHONPATH=tools/check_settings python -m check_settings bbb/bbb/settings"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+ignore_missing_imports = true

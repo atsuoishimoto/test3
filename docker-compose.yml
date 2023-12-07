@@ -1,0 +1,25 @@
+version: "2.4"
+services:
+  nginx:
+    image: nginx:stable
+    depends_on:
+      - webapp
+    ports:
+      - "8080:80"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "/tmp:/log"
+      - "/tmp:/var/log/nginx/healthd"
+    mem_limit: 64m
+  webapp:
+    build: ./
+    ports:
+      - "8000:8000"
+    volumes:
+      - "/tmp:/log"
+      - "/tmp:/tmp"
+    mem_reservation: 768m
+    environment:
+      DJANGO_SETTINGS_MODULE: bbb.settings
+      APP_VERSION: local
+    read_only: true

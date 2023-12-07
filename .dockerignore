@@ -1,0 +1,46 @@
+# Byte-compiled / optimized
+**/__pycache__/
+**/*.py[cod]
+
+# env
+.Python
+env/
+**/.DS_Store
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+.mypy_cache/
+.pytest_cache/
+junit.xml
+coverage.xml
+flake8.txt
+
+# Database
+*.sqlite3
+
+# Pycharm
+.idea/
+
+# Elastic Beanstalk Files
+Dockerrun.aws.*
+.ebextensions/
+.elasticbeanstalk/
+.ebignore
+
+# nginx
+nginx.conf
+
+# docker-compose
+docker-compose.*
+
+.git/
+.github/
+.circleci/
+circle.yml

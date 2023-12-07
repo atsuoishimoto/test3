@@ -1,0 +1,84 @@
+name: Dev workflow
+
+concurrency:
+  group: development
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    uses: "./.github/workflows/test.yml"
+
+  build:
+    name: Build application for development
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login AWS
+        uses: "nikkei/gh-actions/aws-eb/login-aws/v1@main"
+        with:
+          role-to-assume: "arn:aws:iam::187316225415:role/oidc-github-actions"
+
+      - name: Build image
+        uses: "nikkei/gh-actions/aws-eb/build-image/v1@main"
+
+      - name: Push image
+        uses: "nikkei/gh-actions/aws-eb/push-image/v1@main"
+
+  deploy:
+    name: Deploy application for development
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login AWS
+        uses: "nikkei/gh-actions/aws-eb/login-aws/v1@main"
+        with:
+          role-to-assume: "arn:aws:iam::187316225415:role/oidc-github-actions"
+
+      - name: Install deploy tools
+        uses: "nikkei/gh-actions/aws-eb/install-deploy-tools/v1@main"
+
+      - name: Pre deploy
+        uses: "nikkei/gh-actions/aws-eb/pre-deploy/v1@main"
+        with:
+          ebextensions: "s3://nikkei-webapidev-ebconfig/ebextensions_al2.zip"
+
+      - name: Init EB
+        id: init-eb
+        uses: "nikkei/gh-actions/aws-eb/init-eb/v1@main"
+        with:
+          eb-subdomain: "nikkei-webapidev-${{ github.event.repository.name }}"
+          eb-config-file: "s3://nikkei-webapidev-ebconfig/private_service_al2_dev.cfg.yml"
+          ebi-arguments: --prefix dev --docker-compose=docker-compose.dev.yml
+          billing-tag: apigw
+
+      - name: Deploy EB application
+        if: ${{ steps.init-eb.outputs.is-eb-initialized == 'false' }}
+        run: |
+          ebi deploy \
+            ${{ github.event.repository.name }} \
+            ${{ github.event.repository.name }} \
+            --prefix dev \
+            --docker-compose=docker-compose.dev.yml \
+            --dockerrun=Dockerrun.aws.dev.json

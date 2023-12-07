@@ -1,0 +1,89 @@
+name: scheduled-poetry-update
+
+on:
+  schedule:
+    - cron: '30 0 3 * *' # 毎月3日9:30
+  workflow_dispatch:
+jobs:
+  job1:
+    name: Update Poetry Library
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          architecture: x64
+
+      - name: Setup poetry env
+        run: poetry env use $(which python3)
+
+      - name: Poetry show outdated
+        id: show
+        run: |
+          poetry_show=`poetry show --outdated --no-ansi`
+          echo "$poetry_show"
+          echo "std_out<<EOF_POETRY_S279UL" >> $GITHUB_OUTPUT
+          echo "$poetry_show" >> $GITHUB_OUTPUT
+          echo "EOF_POETRY_S279UL" >> $GITHUB_OUTPUT
+
+      - name: Poetry Update
+        id: update
+        run: |
+          poetry_update=`poetry update --lock --no-ansi | uniq`
+          echo "$poetry_update"
+          echo "std_out<<EOF_POETRY_S279UL" >> $GITHUB_OUTPUT
+          echo "$poetry_update" >> $GITHUB_OUTPUT
+          echo "EOF_POETRY_S279UL" >> $GITHUB_OUTPUT
+
+      - name: Poetry Update Processing
+        id: dryrun
+        run: |
+          poetry_dryrun=`poetry update --lock --no-ansi --dry-run`
+          echo "$poetry_dryrun"
+          echo "std_out<<EOF_POETRY_S279UL" >> $GITHUB_OUTPUT
+          echo "$poetry_dryrun" >> $GITHUB_OUTPUT
+          echo "EOF_POETRY_S279UL" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          base: main
+          branch: "poetry-update"
+          delete-branch: true
+          assignees: "${{ github.actor }}"
+          reviewers: "${{ github.actor }}"
+          commit-message: "Poetry update"
+          title: "Poetry update"
+          body: |
+            **The packages to update**
+
+            ```bash
+            ${{ steps.update.outputs.std_out }}
+            ```
+
+            <details>
+              <summary>Dry run updating process...</summary>
+
+              ```bash
+              ${{ steps.dryrun.outputs.std_out }}
+              ```
+            </details>
+
+            **Show the latest version**
+
+            ```bash
+            ${{ steps.show.outputs.std_out }}
+            ```
+
+      - name: Check outputs
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"

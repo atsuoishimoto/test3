@@ -1,0 +1,86 @@
+name: Prod workflow
+
+concurrency:
+  group: production
+
+on:
+  push:
+    branches:
+      - "deployment/production"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    uses: "./.github/workflows/test.yml"
+
+  build:
+    name: Build application for production
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login AWS
+        uses: "nikkei/gh-actions/aws-eb/login-aws/v1@main"
+        with:
+          role-to-assume: "arn:aws:iam::742708366935:role/oidc-github-actions"
+
+      - name: Build image
+        uses: "nikkei/gh-actions/aws-eb/build-image/v1@main"
+
+      - name: Push image
+        uses: "nikkei/gh-actions/aws-eb/push-image/v1@main"
+
+  deploy:
+    name: Deploy application for production
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login AWS
+        uses: "nikkei/gh-actions/aws-eb/login-aws/v1@main"
+        with:
+          role-to-assume: "arn:aws:iam::742708366935:role/oidc-github-actions"
+
+      - name: Install deploy tools
+        uses: "nikkei/gh-actions/aws-eb/install-deploy-tools/v1@main"
+
+      - name: Pre deploy
+        uses: "nikkei/gh-actions/aws-eb/pre-deploy/v1@main"
+        with:
+          ebextensions: "s3://nikkei-webapi-ebconfig/ebextensions_al2.zip"
+
+      - name: Init EB
+        id: init-eb
+        uses: "nikkei/gh-actions/aws-eb/init-eb/v1@main"
+        with:
+          eb-subdomain: "nikkei-webapi-${{ github.event.repository.name }}"
+          eb-config-file: "s3://nikkei-webapi-ebconfig/private_service_al2_prod.cfg.yml"
+          ebi-arguments: --prefix prod --docker-compose=docker-compose.prod.yml
+          billing-tag: apigw
+
+      - name: Deploy EB application
+        if: ${{ steps.init-eb.outputs.is-eb-initialized == 'false' }}
+        run: |
+          ebi clonedeploy \
+            ${{ github.event.repository.name }} \
+            ${{ github.event.repository.name }} \
+            nikkei-webapi-${{ github.event.repository.name }} \
+            --noswap \
+            --prefix prod \
+            --docker-compose=docker-compose.prod.yml \
+            --dockerrun=Dockerrun.aws.prod.json
