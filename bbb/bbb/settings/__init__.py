@@ -161,3 +161,5 @@ APP_VERSION = os.environ.get("APP_VERSION", "local")
 ####################
 # Your application #
 ####################
+
+AAABBBBCCCCDD=1
