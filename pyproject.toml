@@ -11,7 +11,7 @@ packages = [
 Django = "^4.0"
 # nikkei-utils = "^1.0.0"
 python = "^3.11"
-sentry-sdk = "^1.5.10"
+sentry-sdk = "^1.39.1"
 whitenoise = "^6.0.0"
 uWSGI = "^2.0.21"
 
