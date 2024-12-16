@@ -29,6 +29,7 @@ jobs:
 
       - name: Run check-settings
         id: run
+        continue-on-error: true
         run: |
           aaa=$(python3 -c 'import sys;sys.exit("abcdefg")' 2>&1)
           echo "exitcode=$?" >> $GITHUB_ENV
@@ -36,7 +37,7 @@ jobs:
 
       - name: Create issue
         run: |
-          echo $exitcode
+          echo $msg
           if [[ $exitcode != '0' ]]; then
             echo $msg
           fi
