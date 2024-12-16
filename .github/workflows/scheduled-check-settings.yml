@@ -26,14 +26,13 @@ jobs:
         run: |
           poetry env use $(which python3)
           poetry install --no-ansi
-          pip install srcchecker -i https://pypi.n8s.jp/9c346c40-7d2f-473e-9580-d41ee07d25ea/packages/simple/
 
       - name: Run check-settings
         id: run
         continue-on-error: true
         run: |
           set +e
-          msg=$(django_settingchecker bbbb/bbbb/settings/' 2>&1)
+          aaa=$(python3 -c 'import sys;sys.exit("abcdefg")' 2>&1)
           echo "exitcode=$?" >> $GITHUB_ENV
           echo "msg=$aaa" >> $GITHUB_ENV
 
@@ -42,5 +41,5 @@ jobs:
           echo $msg
           echo $exitcode
           if [[ $exitcode != '0' ]]; then
-            echo "FAILED!"
+            echo $msg
           fi
