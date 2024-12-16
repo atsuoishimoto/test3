@@ -31,6 +31,7 @@ jobs:
         id: run
         continue-on-error: true
         run: |
+          set +e
           aaa=$(python3 -c 'import sys;print("abcdefg")' 2>&1)
           echo "exitcode=$?" >> $GITHUB_ENV
           echo "msg=$aaa" >> $GITHUB_ENV
