@@ -1,0 +1,42 @@
+name: scheduled-check-settings
+on:
+  workflow_dispatch:
+
+jobs:
+  job1:
+    name: Detect unused setting
+    permissions:
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Setup poetry env
+        run: |
+          poetry env use $(which python3)
+          poetry install --no-ansi
+
+      - name: Run check-settings
+        id: run
+        run: |
+          aaa=$(python3 -c 'import sys;sys.exit("abcdefg")' 2>&1)
+          echo "exitcode=$?" >> $GITHUB_ENV
+          echo "msg=$aaa" >> $GITHUB_ENV
+
+      - name: Create issue
+        run: |
+          echo $exitcode
+          if [[ $exitcode != '0' ]]; then
+            echo $msg
+          fi

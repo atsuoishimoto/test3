@@ -1,0 +1,13 @@
+{
+  "revision": "1e3655f06de714732df1af30a23ff29474a157e3",
+  "template": "git@github.com:Nikkei/django-project-template.git",
+  "variables": {
+    "_checkout": null,
+    "_output_dir": "/Users/ishimoto/wk",
+    "_repo_dir": "/Users/ishimoto/.cookiecutters/django-project-template",
+    "_template": "git@github.com:Nikkei/django-project-template.git",
+    "project_name": "bbbb",
+    "repo_name": "aaaa",
+    "subdomain": "mysubdomain"
+  }
+}

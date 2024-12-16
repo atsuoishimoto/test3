@@ -1,0 +1,119 @@
+[tool.poetry]
+authors = []
+description = ""
+name = "aaaa"
+packages = [
+  {include = "*", from = "bbbb"},
+]
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+Django = "^5.1"
+# nikkei-utils = "^1.0.0"
+python = "^3.12"
+sentry-sdk = "^2.3.1"
+uWSGI = "^2.0.23"
+whitenoise = "^6.6.0"
+
+[tool.poetry.group.dev.dependencies]
+coverage = "^7.3.4"
+mypy = "^1.8"
+pytest = "^8.0.0"
+pytest-cov = "^5.0.0"
+pytest-django = "^4.7.0"
+pytest-mock = "^3.12.0"
+pytest-randomly = "^3.15.0"
+pytest-responses = "^0.5.0"
+pytest-xdist = "^3.5.0"
+ruff = "^0.6.2"
+taskipy = "^1.12.2"
+testfixtures = "^8.0.0"
+tox = "^4.11.4"
+
+[[tool.poetry.source]]
+name = "nikkei"
+priority = "primary"
+url = "https://pypi.n8s.jp/9c346c40-7d2f-473e-9580-d41ee07d25ea/packages/simple/"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[tool.ruff]
+target-version = "py312" # Python 3.12
+
+exclude = [
+  "htmlcov",
+  "**/.mypy_cache",
+  "**/.pytest_cache",
+  ".tox",
+  "venv",
+  ".venv",
+  "bbbb/*/migrations/*",
+  "bbbb/bbbb/wsgi.py",
+]
+include = ["*.py"]
+
+lint.ignore = [
+  "E203", # Whitespace before ':'
+  "E501", # Line too long (82 &gt; 79 characters)
+  "D105", # undocumented-magic-method
+  "D107", # undocumented-public-init
+  "D205", # blank-line-after-summary
+  "D415", # ends-in-punctuation
+]
+
+# flake8-bugbear以下はtoxのlint checkではignoreしています。プロジェクトに応じて適宜変更してください
+lint.select = [
+  "F", # Pyflakes
+  "E", # pycodestyle error
+  "W", # pycodestyle warning
+  "I", # isort
+  "B", # flake8-bugbear
+  "C", # flake8-comprehensions
+  "UP", # pyupgrade
+  "D", # pydocstyle 厳密なpydocstyleを適用しない場合は除いてください
+]
+
+line-length = 99
+src = ["bbbb"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.coverage.report]
+include = ["bbbb/**"]
+omit = [
+  "bbbb/*/tests/**",
+  "bbbb/*/tests.py",
+  "bbbb/bbbb/settings/**",
+]
+skip_covered = true
+
+[tool.taskipy.tasks]
+check-settings = "PYTHONPATH=tools/check_settings python -m check_settings bbbb/bbbb/settings"
+createsuperuser = "python bbbb/manage.py createsuperuser"
+format = '''
+ruff format bbbb/
+ruff check bbbb/ --fix
+'''
+migrate = "python bbbb/manage.py migrate"
+minimum-format = '''
+ruff check bbbb/ --ignore B,C,UP,D --fix
+ruff format bbbb/
+'''
+runserver = "DJANGO_SETTINGS_MODULE=bbbb.settings.local python bbbb/manage.py runserver"
+unsafe-format = '''
+ruff check bbbb/ --unsafe-fixes --fix
+ruff format bbbb/
+'''
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+
+[tool.mypy]
+ignore_missing_imports = true

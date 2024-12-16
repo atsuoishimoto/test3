@@ -1,0 +1,87 @@
+name: bbbb-localtest
+volumes:
+  mysql_vol:
+
+services:
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      TZ: UTC
+      MYSQL_DATABASE: bbbb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_vol:/var/lib/mysql
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+  nginx:
+    image: nginx:stable
+    depends_on:
+      - webapp
+    ports:
+      - "8080:80"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "/tmp:/log"
+      - "/tmp:/var/log/nginx/healthd"
+    mem_limit: 64m
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+#      - ".:/usr/src/app"
+      - "/tmp:/log"
+      - "/tmp:/tmp"
+    environment:
+      DJANGO_SETTINGS_MODULE: bbbb.settings.mysqltest
+      APP_VERSION: local
+      REDIS_HOST: redis
+      MYSQL_HOST: db
+      MYSQL_DATABASE: bbbb
+      MYSQL_USER: root  # to create database for test
+      MYSQL_PASSWORD: root
+    command: /bin/sh -c "python -m manage migrate &&\
+                         exec uwsgi uwsgi.ini"
+    read_only: true
+  pytest:
+    profiles:
+      - pytest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POETRY_HOME: /opt/poetry
+      DJANGO_SETTINGS_MODULE: bbbb.settings.mysqltest
+      APP_VERSION: local
+      REDIS_HOST: redis
+      MYSQL_HOST: db
+      MYSQL_DATABASE: bbbb
+      MYSQL_USER: root  # to create database for test
+      MYSQL_PASSWORD: root
+    user: root
+    command: >
+      bash -c "apt update &&
+      apt install -y --no-install-recommends curl &&
+      export POETRY_HOME=/opt/poetry &&
+      curl -sSL https://install.python-poetry.org | python3 - &&
+      cp pyproject.toml poetry.lock /opt/pythonenv/ &&
+      cd /opt/pythonenv/ &&
+      $${POETRY_HOME}/bin/poetry config virtualenvs.in-project true &&
+      $${POETRY_HOME}/bin/poetry install --no-root &&
+      cd /usr/src/app &&
+      pytest"

@@ -1,0 +1,7 @@
+{
+  "AWSEBDockerrunVersion": "3",
+  "Authentication": {
+    "bucket": "nikkei-webapidev-ecsconfig",
+    "key": "dockercfg-nikkeideploy-al2.json"
+  }
+}
